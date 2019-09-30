@@ -12,7 +12,7 @@ import io.ktor.server.netty.*
 
 
 fun main() {
-    val core = Core("C:/Users/jerem/Xshared/MQLite/include")
+    val core = Core("C:/Users/jerem/Xshared/MQLite/src")
     core.analyse()
 
     val server = embeddedServer(Netty, 8080) {
@@ -20,8 +20,8 @@ fun main() {
             templateLoader = ClassTemplateLoader(this.javaClass.classLoader, "templates")
         }
         routing {
-            get("/") {
-                call.respond(core.display("dependencies"))
+            get("/{plugin?}") {
+                call.respond(call.parameters["plugin"]?.let { it1 -> core.displayPlugin(it1) } ?: core.displayOverview())
             }
             static("/static") {
                 resources("static")

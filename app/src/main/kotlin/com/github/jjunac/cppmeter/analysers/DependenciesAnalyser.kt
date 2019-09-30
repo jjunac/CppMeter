@@ -1,14 +1,15 @@
-package com.github.jjunac.cppmeter.plugins
+package com.github.jjunac.cppmeter.analysers
 
+import com.github.jjunac.cppmeter.Core
 import com.github.jjunac.cppmeter.Plugin
+import com.github.jjunac.cppmeter.displayers.PageDisplayer
 import com.github.jjunac.cppmeter.events.AnalyseEvent
 import com.github.jjunac.cppmeter.events.DisplayEvent
 import com.github.jjunac.cppmeter.events.PostAnalyseEvent
 import com.github.jjunac.cppmeter.events.PreAnalyseEvent
-import io.ktor.freemarker.FreeMarkerContent
 import java.io.File
 
-class DependenciesPlugin: Plugin("dependencies") {
+class DependenciesAnalyser(core: Core) : Plugin(core, "dependencies") {
 
     private val patternInclude  = """#include ["<]([^">]*)[">]""".toRegex(RegexOption.MULTILINE)
     private val dependencies    = mutableMapOf<String, MutableList<String>>()
@@ -36,11 +37,8 @@ class DependenciesPlugin: Plugin("dependencies") {
         externalFiles.addAll(dependencies.values.flatten().filter { !internalFiles.contains(it) })
     }
 
-    override fun display(e: DisplayEvent): FreeMarkerContent {
+    override fun displayPage(e: DisplayEvent): PageDisplayer {
         println(dependencies)
-        return FreeMarkerContent(
-            "plugins/dependencies.ftl",
-            mapOf("internalFiles" to internalFiles, "externalFiles" to externalFiles, "deps" to dependencies)
-        )
+        return displayPageFromTemplate(mapOf("internalFiles" to internalFiles, "externalFiles" to externalFiles, "deps" to dependencies))
     }
 }

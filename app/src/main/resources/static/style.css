@@ -1,0 +1,12 @@
+body {
+    padding-top: 80px;
+}
+
+.navbar-nav .active {
+    box-shadow: 0 5px var(--gray-dark),
+                0 8px var(--success);
+}
+
+.svg-container {
+    height: 90vh !important;
+}

@@ -9,7 +9,7 @@
     <link rel="stylesheet" type="text/css" href="/static/style.css">
     <link rel="shortcut icon" href="/static/favicon.ico">
 
-    <title>${subtitle} - CppMeter</title>
+    <title>${subtitle} | CppMeter</title>
 </#macro>
 <#macro head><@base_head/></#macro>
 
@@ -27,16 +27,34 @@
 </#macro>
 <#macro scripts><@base_scripts/></#macro>
 
-<#macro page>
+<#macro page active_navitem>
     <!doctype html>
     <html lang="en">
     <head>
         <@head/>
     </head>
     <body>
-    <div class="container">
-        <@content/>
-    </div>
+        <nav class="navbar navbar-expand navbar-dark fixed-top bg-dark">
+            <div class="d-flex flex-column flex-wrap">
+                <a class="navbar-brand" href="/">
+                    <img src="/static/logo.png" width="30" height="30" class="d-inline-block align-top" alt="">
+                    Cpp Meter
+                </a>
+                <ul class="navbar-nav mb-auto mt-0 ml-auto">
+                    <li class="nav-item <#if active_navitem == "overview">active</#if>">
+                        <a class="nav-link py-0" href="/">Overview</a>
+                    </li>
+                    <#list plugins as path, name>
+                        <li class="nav-item <#if active_navitem == path>active</#if>">
+                            <a class="nav-link py-0" href="/${path}">${name}</a>
+                        </li>
+                    </#list>
+                </ul>
+            </div>
+        </nav>
+        <div class="container-fluid">
+            <@content/>
+        </div>
     <@scripts/>
     </body>
     </html>

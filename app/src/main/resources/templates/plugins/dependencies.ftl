@@ -75,4 +75,4 @@
     </script>
 </#macro>
 
-<@page/>
+<@page "dependencies"/>
