@@ -1,13 +1,18 @@
 package com.github.jjunac.cppmeter.displayers
 
-import com.github.jjunac.cppmeter.Plugin
+import com.github.jjunac.cppmeter.Registry
+import com.github.jjunac.cppmeter.events.DisplayEvent
 import io.ktor.freemarker.FreeMarkerContent
+import mu.KotlinLogging
 
-data class PageDisplayer(val template: String, val dataModel: Map<String, Any>) {
+class PageDisplayer(val template: String, val dataModel: Map<String, Any>) : Displayer {
 
-    fun toFreeMarkerContent(plugins: Collection<Plugin>): FreeMarkerContent {
+    val logger = KotlinLogging.logger{}
+
+    override fun display(displayEvent: DisplayEvent): Any {
         val finalDataModel = dataModel.toMutableMap()
-        finalDataModel["plugins"] = plugins.associate { it.name to it.getDisplayableName() }
+        finalDataModel["plugins"] = Registry.views.mapValues { it.value.displayableName }
+        logger.debug { finalDataModel }
         return FreeMarkerContent(template, finalDataModel)
     }
 

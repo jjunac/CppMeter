@@ -1,20 +1,16 @@
 package com.github.jjunac.cppmeter.analysers
 
-import com.github.jjunac.cppmeter.Core
-import com.github.jjunac.cppmeter.Plugin
-import com.github.jjunac.cppmeter.displayers.PageDisplayer
+import com.github.jjunac.cppmeter.annotations.RegisterAnalyser
 import com.github.jjunac.cppmeter.events.AnalyseEvent
-import com.github.jjunac.cppmeter.events.DisplayEvent
 import com.github.jjunac.cppmeter.events.PostAnalyseEvent
 import com.github.jjunac.cppmeter.events.PreAnalyseEvent
 import com.github.jjunac.cppmeter.listeners.FunctionComplexityListener
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 
-class ComplexityAnalyser(core: Core) : Plugin(core, "complexity") {
+@RegisterAnalyser
+class ComplexityAnalyser : Analyser {
 
     data class ComplexityData(val id: String, val parentId: String, val name: String, var complexity: Int, val depth: Int)
-
-    data class HueData(val complexity: Int, val minHue: Double, val maxHue: Double)
 
     val functions = mutableListOf<FunctionComplexityListener.Function>()
     val complexityDatas = mutableMapOf<String, ComplexityData>()
@@ -49,47 +45,40 @@ class ComplexityAnalyser(core: Core) : Plugin(core, "complexity") {
         println(complexityDatas)
     }
 
-    override fun displayPage(e: DisplayEvent): PageDisplayer {
-        return displayPageFromTemplate(constructDataModel())
-    }
-
-    private fun constructDataModel(): Map<String, Any> {
-        val ids = mutableListOf("project-root")
-        val labels = mutableListOf("Project")
-        val parents = mutableListOf("")
-        val values = mutableListOf(totalComplexity)
-        val colors = mutableListOf("#fff")
-
-        val cumulativeComplexities = mutableMapOf("" to 0)
-        fun computeColor(complexityData: ComplexityData): String {
-            val parentCumulativeComplexity = cumulativeComplexities[complexityData.parentId]!!
-            cumulativeComplexities[complexityData.id] = parentCumulativeComplexity
-            cumulativeComplexities[complexityData.parentId] = parentCumulativeComplexity + complexityData.complexity
-            val hue = ((parentCumulativeComplexity.toDouble()/totalComplexity)*360).toInt()
-            return "hsl($hue,${100-complexityData.depth*6}%,63%)"
-        }
-
-        complexityDatas
-            .values
-            .sortedWith(compareBy({ it.parentId }, { -it.complexity }, { it.name }))
-            .forEach {
-                println(it)
-                ids.add(it.id)
-                labels.add(it.name)
-                parents.add(if (it.parentId.isEmpty()) "project-root" else it.parentId)
-                values.add(it.complexity)
-                colors.add(computeColor(it))
-            }
-
-        return mapOf("ids" to ids, "labels" to labels, "parents" to parents, "values" to values, "colors" to colors)
-    }
-
-//    private fun computeHue(id: String): Int {
-//        if (id.isEmpty()) return 120
-//        with(complexityDatas[id]!!) {
-//            val parentComplexity = complexityDatas[parentId]?.complexity
-//            return ((1-(complexity.toDouble()/(parentComplexity ?: totalComplexity)))*computeHue(parentId)).toInt()
-//        }
+//    override fun displayPage(e: DisplayEvent): PageDisplayer {
+//        return displayPageFromTemplate(constructDataModel())
 //    }
+
+//    private fun constructDataModel(): Map<String, Any> {
+//        val ids = mutableListOf("project-root")
+//        val labels = mutableListOf("Project")
+//        val parents = mutableListOf("")
+//        val values = mutableListOf(totalComplexity)
+//        val colors = mutableListOf("#fff")
+//
+//        val cumulativeComplexities = mutableMapOf("" to 0)
+//        fun computeColor(complexityData: ComplexityData): String {
+//            val parentCumulativeComplexity = cumulativeComplexities[complexityData.parentId]!!
+//            cumulativeComplexities[complexityData.id] = parentCumulativeComplexity
+//            cumulativeComplexities[complexityData.parentId] = parentCumulativeComplexity + complexityData.complexity
+//            val hue = ((parentCumulativeComplexity.toDouble()/totalComplexity)*360).toInt()
+//            return "hsl($hue,${100-complexityData.depth*6}%,63%)"
+//        }
+//
+//        complexityDatas
+//            .values
+//            .sortedWith(compareBy({ it.parentId }, { -it.complexity }, { it.name }))
+//            .forEach {
+//                println(it)
+//                ids.add(it.id)
+//                labels.add(it.name)
+//                parents.add(if (it.parentId.isEmpty()) "project-root" else it.parentId)
+//                values.add(it.complexity)
+//                colors.add(computeColor(it))
+//            }
+//
+//        return mapOf("ids" to ids, "labels" to labels, "parents" to parents, "values" to values, "colors" to colors)
+//    }
+
 }
 

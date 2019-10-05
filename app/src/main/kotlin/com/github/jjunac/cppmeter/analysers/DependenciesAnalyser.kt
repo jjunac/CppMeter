@@ -1,20 +1,18 @@
 package com.github.jjunac.cppmeter.analysers
 
-import com.github.jjunac.cppmeter.Core
-import com.github.jjunac.cppmeter.Plugin
-import com.github.jjunac.cppmeter.displayers.PageDisplayer
+import com.github.jjunac.cppmeter.annotations.RegisterAnalyser
 import com.github.jjunac.cppmeter.events.AnalyseEvent
-import com.github.jjunac.cppmeter.events.DisplayEvent
 import com.github.jjunac.cppmeter.events.PostAnalyseEvent
 import com.github.jjunac.cppmeter.events.PreAnalyseEvent
 import java.io.File
 
-class DependenciesAnalyser(core: Core) : Plugin(core, "dependencies") {
+@RegisterAnalyser
+class DependenciesAnalyser : Analyser {
 
     private val patternInclude  = """#include ["<]([^">]*)[">]""".toRegex(RegexOption.MULTILINE)
-    private val dependencies    = mutableMapOf<String, MutableList<String>>()
-    private val internalFiles   = mutableSetOf<String>()
-    private val externalFiles   = mutableSetOf<String>()
+    val dependencies    = mutableMapOf<String, MutableList<String>>()
+    val internalFiles   = mutableSetOf<String>()
+    val externalFiles   = mutableSetOf<String>()
 
     override fun preAnalyse(e: PreAnalyseEvent) {
         println(e)
@@ -37,8 +35,4 @@ class DependenciesAnalyser(core: Core) : Plugin(core, "dependencies") {
         externalFiles.addAll(dependencies.values.flatten().filter { !internalFiles.contains(it) })
     }
 
-    override fun displayPage(e: DisplayEvent): PageDisplayer {
-        println(dependencies)
-        return displayPageFromTemplate(mapOf("internalFiles" to internalFiles, "externalFiles" to externalFiles, "deps" to dependencies))
-    }
 }

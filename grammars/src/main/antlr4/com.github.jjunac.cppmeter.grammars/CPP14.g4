@@ -23,10 +23,6 @@
  ******************************************************************************/
 grammar CPP14;
 
-@header {
-    package com.github.jjunac.cppmeter.grammars;
-}
-
 /*Basic concepts*/
 
 
