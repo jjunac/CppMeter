@@ -2,7 +2,10 @@ package com.github.jjunac.cppmeter
 
 import freemarker.cache.ClassTemplateLoader
 import io.ktor.application.*
+import io.ktor.features.StatusPages
 import io.ktor.freemarker.FreeMarker
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.resource
 import io.ktor.http.content.resources
 import io.ktor.http.content.static
 import io.ktor.response.*
@@ -18,16 +21,22 @@ fun Application.main() {
     install(FreeMarker) {
         templateLoader = ClassTemplateLoader(this.javaClass.classLoader, "templates")
     }
+    install(StatusPages) {
+        exception<Throwable> { cause ->
+            call.respond(HttpStatusCode.InternalServerError)
+        }
+    }
+
 
     val core = Core("C:/Users/jerem/Xshared/MQLite/src")
     core.analyseProject()
 
 
     routing {
-        get("/{view?}") {
-            call.respond(call.parameters["view"]?.let { it1 -> core.displayView(it1) } ?: core.displayOverview())
+        get("{view?}") {
+            call.respond(core.displayView(call.parameters["view"]))
         }
-        static("/static") {
+        static("static") {
             resources("static")
         }
     }

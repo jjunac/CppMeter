@@ -18,6 +18,7 @@ open class Registry<K, V>(private val internalMap: MutableMap<K, V>) : Map<K, V>
 
         private val logger = KotlinLogging.logger {}
         private val reflections = Reflections("com.github.jjunac.cppmeter", SubTypesScanner(), TypeAnnotationsScanner())
+
         private val registeringAnnotation: Map<Class<*>, Class<out Annotation>> = mapOf(
             Analyser::class.java to RegisterAnalyser::class.java,
             View::class.java to RegisterView::class.java

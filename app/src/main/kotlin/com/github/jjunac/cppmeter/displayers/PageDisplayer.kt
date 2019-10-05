@@ -5,7 +5,7 @@ import com.github.jjunac.cppmeter.events.DisplayEvent
 import io.ktor.freemarker.FreeMarkerContent
 import mu.KotlinLogging
 
-class PageDisplayer(val template: String, val dataModel: Map<String, Any>) : Displayer {
+class PageDisplayer(val template: String, val dataModel: Map<String, Any> = mapOf()) : Displayer {
 
     val logger = KotlinLogging.logger{}
 

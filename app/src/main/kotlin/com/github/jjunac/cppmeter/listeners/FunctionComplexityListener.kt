@@ -1,6 +1,7 @@
 package com.github.jjunac.cppmeter.listeners
 
 import com.github.jjunac.cppmeter.grammars.CPP14Parser
+import mu.KotlinLogging
 import java.util.*
 
 class FunctionComplexityListener : FunctionSignatureListener() {
@@ -9,9 +10,11 @@ class FunctionComplexityListener : FunctionSignatureListener() {
 
     val functions = mutableListOf<Function>()
 
+    private val logger = KotlinLogging.logger {}
+
     override fun enterFunctiondefinition(ctx: CPP14Parser.FunctiondefinitionContext?) {
         super.enterFunctiondefinition(ctx)
-        println(getFullyQualifiedFunctionName())
+        logger.debug { "Parsing file: ${getFullyQualifiedFunctionName()}" }
     }
 
     override fun exitFunctiondefinition(ctx: CPP14Parser.FunctiondefinitionContext?) {

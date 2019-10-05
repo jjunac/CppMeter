@@ -15,14 +15,12 @@ class DependenciesAnalyser : Analyser {
     val externalFiles   = mutableSetOf<String>()
 
     override fun preAnalyse(e: PreAnalyseEvent) {
-        println(e)
         dependencies.clear()
         internalFiles.clear()
         externalFiles.clear()
     }
 
     override fun analyse(e: AnalyseEvent) {
-        println(e)
         dependencies[e.filePath] = mutableListOf()
         patternInclude
             .findAll(File(e.projectPath + "/" + e.filePath).readText())
@@ -30,7 +28,6 @@ class DependenciesAnalyser : Analyser {
     }
 
     override fun postAnalyse(e: PostAnalyseEvent) {
-        println(e)
         internalFiles.addAll(dependencies.keys)
         externalFiles.addAll(dependencies.values.flatten().filter { !internalFiles.contains(it) })
     }

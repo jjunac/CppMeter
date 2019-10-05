@@ -31,7 +31,6 @@ class FunctionComplexityView : PageView("complexity") {
             .values
             .sortedWith(compareBy({ it.parentId }, { -it.complexity }, { it.name }))
             .forEach {
-                println(it)
                 ids.add(it.id)
                 labels.add(it.name)
                 parents.add(if (it.parentId.isEmpty()) "project-root" else it.parentId)

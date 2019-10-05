@@ -26,46 +26,22 @@ import java.nio.file.Paths
 class Core(private val projectPath: String) {
 
     private val logger = KotlinLogging.logger {}
-//    private val plugins: MutableMap<String, BaseAnalyser> = mutableMapOf()
-//    private val reflections = Reflections("com.github.jjunac.cppmeter", SubTypesScanner(), TypeAnnotationsScanner())
-
 
     init {
         Registry.register()
-//        reflections.getTypesAnnotatedWith(RegisterAnalyser::class.java).forEach {
-//            if (!Analyser::class.java.isAssignableFrom(it))
-//                error("${it.simpleName} doesn't extend Analyser")
-//            @Suppress("UNCHECKED_CAST") val clazz = it as Class<Analyser>
-//            Registry.analysers.register(clazz, clazz.getConstructor().newInstance())
-//        }
-//        logger.info { "${Registry.analysers.size} Analysers registered" }
-//
-//        reflections.getTypesAnnotatedWith(RegisterView::class.java).forEach {
-//            if (!View::class.java.isAssignableFrom(it))
-//                error("${it.simpleName} doesn't extend View")
-//            @Suppress("UNCHECKED_CAST") val clazz = it as Class<View>
-//            Registry.views.register(clazz.getAnnotation(RegisterView::class.java).path, clazz.getConstructor().newInstance())
-//        }
-//        logger.info { "${Registry.analysers.size} Analysers registered" }
-
-//        registerPlugin(DependenciesAnalyser(this))
-//        registerPlugin(ComplexityAnalyser(this))
     }
-
-//    private fun registerPlugin(baseAnalyser: BaseAnalyser) {
-//        plugins[baseAnalyser.name] = baseAnalyser
-//    }
 
     fun analyseProject() {
         runAnalysers()
         buildViews()
     }
 
-    fun displayOverview(): Any =
-        PageDisplayer("overview.ftl", mapOf()).display(DisplayEvent())
-
-    fun displayView(pluginName: String): Any =
-        Registry.views[pluginName]!!.displayer!!.display(DisplayEvent())
+    fun displayView(pluginName: String?): Any {
+        if (pluginName.isNullOrEmpty())
+            return PageDisplayer("overview.ftl").display(DisplayEvent())
+        // TODO add 404
+        return Registry.views[pluginName]!!.displayer!!.display(DisplayEvent())
+    }
 
     private fun runAnalysers() {
         Registry.analysers.values.forEach { it.preAnalyse(PreAnalyseEvent(projectPath)) }
