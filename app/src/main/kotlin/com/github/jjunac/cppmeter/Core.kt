@@ -13,7 +13,9 @@ import com.github.jjunac.cppmeter.analysers.ComplexityAnalyser
 import com.github.jjunac.cppmeter.annotations.RegisterAnalyser
 import com.github.jjunac.cppmeter.annotations.RegisterView
 import com.github.jjunac.cppmeter.views.View
+import io.ktor.features.NotFoundException
 import io.ktor.freemarker.FreeMarkerContent
+import io.ktor.util.KtorExperimentalAPI
 import mu.KotlinLogging
 import org.antlr.v4.runtime.ANTLRFileStream
 import org.antlr.v4.runtime.CommonTokenStream
@@ -36,11 +38,12 @@ class Core(private val projectPath: String) {
         buildViews()
     }
 
+    @KtorExperimentalAPI
     fun displayView(pluginName: String?): Any {
         if (pluginName.isNullOrEmpty())
             return PageDisplayer("overview.ftl").display(DisplayEvent())
-        // TODO add 404
-        return Registry.views[pluginName]!!.displayer!!.display(DisplayEvent())
+        val view = Registry.views[pluginName] ?: throw NotFoundException()
+        return view.displayer!!.display(DisplayEvent())
     }
 
     private fun runAnalysers() {
