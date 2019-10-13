@@ -10,3 +10,7 @@ body {
 .svg-container {
     height: 90vh !important;
 }
+
+.version {
+    font-size: 13px;
+}

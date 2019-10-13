@@ -27,6 +27,11 @@ import java.nio.file.Paths
 
 class Core(private val projectPath: String) {
 
+    companion object {
+        val version = "1.0.0"
+        val codename = "Aerosmith"
+    }
+
     private val logger = KotlinLogging.logger {}
 
     init {

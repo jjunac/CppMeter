@@ -35,12 +35,18 @@
     </head>
     <body>
         <nav class="navbar navbar-expand navbar-dark fixed-top bg-dark">
-            <div class="d-flex flex-column flex-wrap">
-                <a class="navbar-brand" href="/">
-                    <img src="/static/logo.png" width="30" height="30" class="d-inline-block align-top" alt="">
-                    Cpp Meter
-                </a>
-                <ul class="navbar-nav mb-auto mt-0 ml-auto">
+            <div class="d-flex flex-column w-100">
+                <div class="d-flex">
+                    <a class="navbar-brand" href="/">
+                        <img src="/static/logo.png" width="30" height="30" class="d-inline-block align-top" alt="">
+                        Cpp Meter
+                    </a>
+                    <div class="ml-auto d-flex flex-column text-right version">
+                        <span class="navbar-text py-0" style="letter-spacing: -0.011em;">Cpp Meter version ${version}</span>
+                        <span class="navbar-text py-0">CODENAME: ${codename}</span>
+                    </div>
+                </div>
+                <ul class="navbar-nav">
                     <li class="nav-item <#if active_navitem == "overview">active</#if>">
                         <a class="nav-link py-0" href="/">Overview</a>
                     </li>
