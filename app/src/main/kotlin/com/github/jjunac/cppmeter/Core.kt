@@ -12,6 +12,8 @@ import com.github.jjunac.cppmeter.grammars.CPP14Parser
 import com.github.jjunac.cppmeter.analysers.ComplexityAnalyser
 import com.github.jjunac.cppmeter.annotations.RegisterAnalyser
 import com.github.jjunac.cppmeter.annotations.RegisterView
+import com.github.jjunac.cppmeter.daos.Project
+import com.github.jjunac.cppmeter.daos.Projects
 import com.github.jjunac.cppmeter.views.View
 import io.ktor.features.NotFoundException
 import io.ktor.freemarker.FreeMarkerContent
@@ -19,23 +21,35 @@ import io.ktor.util.KtorExperimentalAPI
 import mu.KotlinLogging
 import org.antlr.v4.runtime.ANTLRFileStream
 import org.antlr.v4.runtime.CommonTokenStream
+import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.StdOutSqlLogger
+import org.jetbrains.exposed.sql.addLogger
+import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.transactions.transactionManager
 import org.reflections.Reflections
 import org.reflections.scanners.SubTypesScanner
 import org.reflections.scanners.TypeAnnotationsScanner
 import java.io.File
 import java.nio.file.Paths
+import java.sql.Connection.TRANSACTION_READ_UNCOMMITTED
 
-class Core(private val projectPath: String) {
+object Core {
 
-    companion object {
-        val version = "1.0.0"
-        val codename = "Aerosmith"
-    }
+    val version = "1.0.0"
+    val codename = "Aerosmith"
+    private val projectPath = "C:/Users/jerem/Xshared/MQLite/src"
 
     private val logger = KotlinLogging.logger {}
 
     init {
         Registry.register()
+
+        Database.connect("jdbc:sqlite:data/data.sqlite3", "org.sqlite.JDBC")
+        transaction(TRANSACTION_READ_UNCOMMITTED, 1) {
+            addLogger(StdOutSqlLogger)
+            SchemaUtils.create (Projects)
+        }
     }
 
     fun analyseProject() {
@@ -45,11 +59,11 @@ class Core(private val projectPath: String) {
 
     @KtorExperimentalAPI
     fun displayView(pluginName: String?): Any {
-        if (pluginName.isNullOrEmpty())
-            return PageDisplayer("overview.ftl").display(DisplayEvent())
         val view = Registry.views[pluginName] ?: throw NotFoundException()
         return view.displayer!!.display(DisplayEvent())
     }
+
+    fun displayOverview() = PageDisplayer("overview.ftl").display(DisplayEvent())
 
     private fun runAnalysers() {
         Registry.analysers.values.forEach { it.preAnalyse(PreAnalyseEvent(projectPath)) }

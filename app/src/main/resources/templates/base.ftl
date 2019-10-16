@@ -27,7 +27,7 @@
 </#macro>
 <#macro scripts><@base_scripts/></#macro>
 
-<#macro page active_navitem>
+<#macro page active_navitem="">
     <!doctype html>
     <html lang="en">
     <head>
@@ -37,25 +37,28 @@
         <nav class="navbar navbar-expand navbar-dark fixed-top bg-dark">
             <div class="d-flex flex-column w-100">
                 <div class="d-flex">
-                    <a class="navbar-brand" href="/">
+                    <a class="navbar-brand mr-auto" href="/">
                         <img src="/static/logo.png" width="30" height="30" class="d-inline-block align-top" alt="">
                         Cpp Meter
                     </a>
-                    <div class="ml-auto d-flex flex-column text-right version">
+                    <a class="btn btn-success mx-3" href="/projects/new">Add project</a>
+                    <div class="d-flex flex-column text-right version">
                         <span class="navbar-text py-0" style="letter-spacing: -0.011em;">Cpp Meter version ${version}</span>
                         <span class="navbar-text py-0">CODENAME: ${codename}</span>
                     </div>
                 </div>
-                <ul class="navbar-nav">
-                    <li class="nav-item <#if active_navitem == "overview">active</#if>">
-                        <a class="nav-link py-0" href="/">Overview</a>
-                    </li>
-                    <#list plugins as path, name>
-                        <li class="nav-item <#if active_navitem == path>active</#if>">
-                            <a class="nav-link py-0" href="/${path}">${name}</a>
+                <#if active_navitem?has_content>
+                    <ul class="navbar-nav">
+                        <li class="nav-item <#if active_navitem == "overview">active</#if>">
+                            <a class="nav-link py-0" href="/">Overview</a>
                         </li>
-                    </#list>
-                </ul>
+                        <#list plugins as path, name>
+                            <li class="nav-item <#if active_navitem == path>active</#if>">
+                                <a class="nav-link py-0" href="/${path}">${name}</a>
+                            </li>
+                        </#list>
+                    </ul>
+                </#if>
             </div>
         </nav>
         <div class="container-fluid">
