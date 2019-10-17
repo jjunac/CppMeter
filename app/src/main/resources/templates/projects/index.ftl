@@ -10,7 +10,7 @@
             <div class="card" style="height: 150px;">
                 <div class="row no-gutters">
                     <div style="width: 150px;">
-                        <img src="https://via.placeholder.com/150" class="card-img" alt="...">
+                        <img src="${getAvatar(p)}" class="card-img" alt="...">
                     </div>
                     <div>
                         <div class="card-body">
