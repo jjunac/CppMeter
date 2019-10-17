@@ -5,15 +5,12 @@ import com.github.jjunac.cppmeter.displayers.PageDisplayer
 import com.github.jjunac.cppmeter.events.DisplayEvent
 import io.ktor.application.call
 import io.ktor.application.log
-import io.ktor.http.ContentType
 import io.ktor.request.receiveParameters
 import io.ktor.response.respond
 import io.ktor.response.respondRedirect
 import io.ktor.routing.*
 import io.ktor.util.KtorExperimentalAPI
 import mu.KotlinLogging
-import org.jetbrains.exposed.sql.transactions.transaction
-import java.sql.Connection
 
 private val logger = KotlinLogging.logger {}
 
@@ -21,11 +18,10 @@ private val logger = KotlinLogging.logger {}
 fun Routing.api() {
     trace { application.log.debug(it.buildText()) }
     apiProjects()
-    get("/{view}") {
-        call.respond(Core.displayView(call.parameters["view"]))
-    }
-    get("/") {
-        call.respond(Core.displayOverview())
+    get("/{view?}") {
+        if (call.request.queryParameters["p"] == null)
+            call.respondRedirect("/projects")
+        call.respond(Core.handle(call.request))
     }
 }
 
@@ -33,7 +29,7 @@ private fun Routing.apiProjects() {
     route("/projects") {
         get {
             call.respond(sqliteTransaction {
-                PageDisplayer("projects/index.ftl", mapOf("projects" to Project.all().map { it.name })).display(DisplayEvent())
+                PageDisplayer("projects/index.ftl").display(DisplayEvent())
             })
         }
         get("new") {

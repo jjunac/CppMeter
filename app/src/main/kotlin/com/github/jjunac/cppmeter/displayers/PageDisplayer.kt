@@ -2,7 +2,9 @@ package com.github.jjunac.cppmeter.displayers
 
 import com.github.jjunac.cppmeter.Core
 import com.github.jjunac.cppmeter.Registry
+import com.github.jjunac.cppmeter.daos.Project
 import com.github.jjunac.cppmeter.events.DisplayEvent
+import com.github.jjunac.cppmeter.sqliteTransaction
 import freemarker.template.TemplateMethodModel
 import freemarker.template.TemplateMethodModelEx
 import io.ktor.freemarker.FreeMarkerContent
@@ -14,10 +16,14 @@ class PageDisplayer(val template: String, val dataModel: Map<String, Any> = mapO
 
     override fun display(displayEvent: DisplayEvent): Any {
         val finalDataModel = dataModel.toMutableMap()
+
         // Variable
         finalDataModel["plugins"] = Registry.views.mapValues { it.value.displayableName }
         finalDataModel["version"] = Core.version
         finalDataModel["codename"] = Core.codename
+        finalDataModel["projects"] = sqliteTransaction { Project.all().map { it.name } }
+        finalDataModel["activeProject"] = displayEvent.activeProject ?: ""
+
         // Methods
         finalDataModel["getAvatar"] = AvatarSrcMethod()
 

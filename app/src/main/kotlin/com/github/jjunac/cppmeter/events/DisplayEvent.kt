@@ -1,5 +1,3 @@
 package com.github.jjunac.cppmeter.events
 
-class DisplayEvent {
-
-}
+data class DisplayEvent(val activeProject: String? = null)

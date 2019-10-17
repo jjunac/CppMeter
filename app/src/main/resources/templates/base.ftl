@@ -27,7 +27,7 @@
 </#macro>
 <#macro scripts><@base_scripts/></#macro>
 
-<#macro page active_navitem="">
+<#macro page activeNavitem="">
     <!doctype html>
     <html lang="en">
     <head>
@@ -36,25 +36,42 @@
     <body>
         <nav class="navbar navbar-expand navbar-dark fixed-top bg-dark">
             <div class="d-flex flex-column w-100">
-                <div class="d-flex">
-                    <a class="navbar-brand mr-auto" href="/">
+                <div class="d-flex navbar-nav">
+                    <a class="navbar-brand mr-2" href="/">
                         <img src="/static/logo.png" width="30" height="30" class="d-inline-block align-top" alt="">
                         Cpp Meter
                     </a>
+                    <span class="pipe-separator py-1">|</span>
+                    <div class="mr-auto dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <#if activeProject?has_content>
+                                ${activeProject}
+                            <#else>
+                                All projects
+                            </#if>
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <a class="dropdown-item" href="/projects">All projects</a>
+                            <div class="dropdown-divider"></div>
+                            <#list projects as p>
+                                <a class="dropdown-item" href="/?p=${p}">${p}</a>
+                            </#list>
+                        </div>
+                    </div>
                     <a class="btn btn-success mx-3" href="/projects/new">Add project</a>
                     <div class="d-flex flex-column text-right version">
                         <span class="navbar-text py-0" style="letter-spacing: -0.011em;">Cpp Meter version ${version}</span>
                         <span class="navbar-text py-0">CODENAME: ${codename}</span>
                     </div>
                 </div>
-                <#if active_navitem?has_content>
+                <#if activeProject?has_content>
                     <ul class="navbar-nav">
-                        <li class="nav-item <#if active_navitem == "overview">active</#if>">
-                            <a class="nav-link py-0" href="/">Overview</a>
+                        <li class="nav-item <#if activeNavitem == "overview">active</#if>">
+                            <a class="nav-link py-0" href="/?p=${activeProject}">Overview</a>
                         </li>
                         <#list plugins as path, name>
-                            <li class="nav-item <#if active_navitem == path>active</#if>">
-                                <a class="nav-link py-0" href="/${path}">${name}</a>
+                            <li class="nav-item <#if activeNavitem == path>active</#if>">
+                                <a class="nav-link py-0" href="/${path}?p=${activeProject}">${name}</a>
                             </li>
                         </#list>
                     </ul>

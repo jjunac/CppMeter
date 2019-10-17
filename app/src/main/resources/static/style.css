@@ -14,3 +14,8 @@ body {
 .version {
     font-size: 13px;
 }
+
+.pipe-separator {
+    color: var(--gray);
+    font-size: 1.25rem;
+}
