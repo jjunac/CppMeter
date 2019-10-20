@@ -11,6 +11,7 @@ import io.ktor.response.respondRedirect
 import io.ktor.routing.*
 import io.ktor.util.KtorExperimentalAPI
 import mu.KotlinLogging
+import org.jetbrains.exposed.sql.transactions.transaction
 
 private val logger = KotlinLogging.logger {}
 
@@ -28,7 +29,7 @@ fun Routing.api() {
 private fun Routing.apiProjects() {
     route("/projects") {
         get {
-            call.respond(sqliteTransaction {
+            call.respond(transaction {
                 PageDisplayer("projects/index.ftl").display(DisplayEvent())
             })
         }
@@ -38,7 +39,7 @@ private fun Routing.apiProjects() {
         post {
             val params = call.receiveParameters()
             logger.debug { params }
-            val project = sqliteTransaction {
+            val project = transaction {
                 Project.new {
                     name = params["name"]!!
                     path = params["path"]!!

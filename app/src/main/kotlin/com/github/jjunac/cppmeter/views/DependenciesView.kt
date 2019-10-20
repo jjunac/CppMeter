@@ -5,9 +5,7 @@ import com.github.jjunac.cppmeter.analysers.DependenciesAnalyser
 import com.github.jjunac.cppmeter.annotations.RegisterView
 
 @RegisterView("dependencies")
-class DependenciesView : PageView("dependencies") {
-
-    val depsAnalyser: DependenciesAnalyser = Registry.analysers.getInstance(DependenciesAnalyser::class.java)
+class DependenciesView(private val depsAnalyser: DependenciesAnalyser) : PageView("dependencies") {
 
     override fun buildDataModel(): Map<String, Any> {
         return mapOf(

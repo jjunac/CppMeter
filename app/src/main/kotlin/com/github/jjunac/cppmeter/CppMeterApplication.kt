@@ -25,6 +25,8 @@ import java.text.DateFormat
 @KtorExperimentalAPI
 fun Application.main() {
 
+    Core.init()
+
     install(FreeMarker) {
         templateLoader = ClassTemplateLoader(this.javaClass.classLoader, "templates")
     }
@@ -41,10 +43,6 @@ fun Application.main() {
             throw cause
         }
     }
-
-
-    Core.analyseProject()
-
 
     install(Routing) {
         static("static") {

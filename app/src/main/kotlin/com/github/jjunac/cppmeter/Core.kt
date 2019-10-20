@@ -1,5 +1,6 @@
 package com.github.jjunac.cppmeter
 
+import com.github.jjunac.cppmeter.daos.Project
 import com.github.jjunac.cppmeter.displayers.PageDisplayer
 import com.github.jjunac.cppmeter.events.AnalyseEvent
 import com.github.jjunac.cppmeter.events.DisplayEvent
@@ -20,64 +21,44 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.StdOutSqlLogger
 import org.jetbrains.exposed.sql.addLogger
+import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
 import java.nio.file.Paths
+import java.sql.Connection
 import java.sql.Connection.TRANSACTION_READ_UNCOMMITTED
 
 object Core {
 
     val version = "1.0.0"
     val codename = "Aerosmith"
-    private val projectPath = "C:/Users/jerem/Xshared/MQLite/src"
+//    private val projectPath = "C:/Users/jerem/Xshared/MQLite/src"
+
+    private val projectAnalyserMap = mutableMapOf<String, ProjectAnalyser>()
 
     private val logger = KotlinLogging.logger {}
 
-    init {
-        Registry.register()
-
+    fun init() {
         Database.connect("jdbc:sqlite:data/data.sqlite3", "org.sqlite.JDBC")
-        transaction(TRANSACTION_READ_UNCOMMITTED, 1) {
+        TransactionManager.manager.defaultIsolationLevel = Connection.TRANSACTION_SERIALIZABLE
+        transaction {
             addLogger(StdOutSqlLogger)
             SchemaUtils.create (Projects)
         }
-    }
 
-    fun analyseProject() {
-        runAnalysers()
-        buildViews()
+        Registry.discover()
     }
 
     @KtorExperimentalAPI
     fun handle(request: ApplicationRequest): Any {
-        val e = DisplayEvent(request.queryParameters["p"])
-        if (request.path() == "/")
-            return PageDisplayer("overview.ftl").display(e)
-        logger.debug { Registry.views }
-        val view = Registry.views[request.document()] ?: throw NotFoundException()
-        return view.displayer!!.display(e)
-    }
-
-    fun displayOverview() = PageDisplayer("overview.ftl").display(DisplayEvent())
-
-    private fun runAnalysers() {
-        Registry.analysers.values.forEach { it.preAnalyse(PreAnalyseEvent(projectPath)) }
-
-        File(projectPath).walk().filter { it.isFile }.forEach {
-            val filePath = Paths.get(projectPath).relativize(it.toPath()).toString().replace(File.separator, "/")
-            val lexer = CPP14Lexer(ANTLRFileStream(it.toPath().toString()))
-            val parser = CPP14Parser(CommonTokenStream(lexer))
-            with(AnalyseEvent(projectPath, filePath, parser.translationunit())) {
-                Registry.analysers.values.forEach { it.analyse(this) }
-            }
+        val activeProject = request.queryParameters["p"]!!
+        // TODO: improve the 2 Map.get
+        projectAnalyserMap.computeIfAbsent(activeProject) {
+            ProjectAnalyser(transaction { Project.find { Projects.name eq it }.limit(1).first() }.path)
         }
-
-        Registry.analysers.values.forEach { it.postAnalyse(PostAnalyseEvent(projectPath)) }
+        return projectAnalyserMap[activeProject]!!.handle(request)
     }
 
-    private fun buildViews() {
-        Registry.views.values.forEach { it.buildDisplayer() }
-    }
 
 
 }

@@ -4,11 +4,11 @@ import com.github.jjunac.cppmeter.Core
 import com.github.jjunac.cppmeter.Registry
 import com.github.jjunac.cppmeter.daos.Project
 import com.github.jjunac.cppmeter.events.DisplayEvent
-import com.github.jjunac.cppmeter.sqliteTransaction
 import freemarker.template.TemplateMethodModel
 import freemarker.template.TemplateMethodModelEx
 import io.ktor.freemarker.FreeMarkerContent
 import mu.KotlinLogging
+import org.jetbrains.exposed.sql.transactions.transaction
 
 class PageDisplayer(val template: String, val dataModel: Map<String, Any> = mapOf()) : Displayer {
 
@@ -18,10 +18,10 @@ class PageDisplayer(val template: String, val dataModel: Map<String, Any> = mapO
         val finalDataModel = dataModel.toMutableMap()
 
         // Variable
-        finalDataModel["plugins"] = Registry.views.mapValues { it.value.displayableName }
+        finalDataModel["plugins"] = displayEvent.viewNameMap
         finalDataModel["version"] = Core.version
         finalDataModel["codename"] = Core.codename
-        finalDataModel["projects"] = sqliteTransaction { Project.all().map { it.name } }
+        finalDataModel["projects"] = transaction { Project.all().map { it.name } }
         finalDataModel["activeProject"] = displayEvent.activeProject ?: ""
 
         // Methods
@@ -41,7 +41,7 @@ class AvatarSrcMethod : TemplateMethodModelEx {
 
     override fun exec(args: MutableList<Any?>?): Any {
         val p = args!![0].toString()
-        val theme = themes[p.hashCode() % themes.size]
+        val theme = themes[(p.hashCode() % themes.size + themes.size) % themes.size]
         return "http://tinygraphs.com/labs/isogrids/hexa/${p}?theme=${theme}&numcolors=4"
     }
 

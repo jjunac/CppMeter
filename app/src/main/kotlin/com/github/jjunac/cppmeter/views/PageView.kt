@@ -14,9 +14,7 @@ abstract class PageView(val name: String) : View {
     abstract fun buildDataModel(): Map<String, Any>
 
     override fun buildDisplayer() {
-        val finalDataModel =  buildDataModel().toMutableMap()
-        finalDataModel["plugins"] = Registry.views.map { it.key to it.value.displayableName }
-        displayer = PageDisplayer("plugins/$name.ftl", finalDataModel)
+        displayer = PageDisplayer("plugins/$name.ftl", buildDataModel())
     }
 
 }

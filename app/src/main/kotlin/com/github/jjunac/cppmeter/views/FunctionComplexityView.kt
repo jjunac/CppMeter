@@ -5,9 +5,8 @@ import com.github.jjunac.cppmeter.analysers.ComplexityAnalyser
 import com.github.jjunac.cppmeter.annotations.RegisterView
 
 @RegisterView("complexity")
-class FunctionComplexityView : PageView("complexity") {
+class FunctionComplexityView(private val complexityAnalyser: ComplexityAnalyser) : PageView("complexity") {
 
-    val complexityAnalyser: ComplexityAnalyser = Registry.analysers.getInstance(ComplexityAnalyser::class.java)
 
     override fun buildDataModel(): Map<String, Any> {
         val ids = mutableListOf("project-root")
