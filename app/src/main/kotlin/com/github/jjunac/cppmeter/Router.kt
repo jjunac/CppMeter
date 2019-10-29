@@ -19,7 +19,7 @@ private val logger = KotlinLogging.logger {}
 fun Routing.api() {
     trace { application.log.debug(it.buildText()) }
     apiProjects()
-    get("/{view?}") {
+    get("/{...}") {
         if (call.request.queryParameters["p"] == null)
             call.respondRedirect("/projects")
         call.respond(Core.handle(call.request))
@@ -38,7 +38,6 @@ private fun Routing.apiProjects() {
         }
         post {
             val params = call.receiveParameters()
-            logger.debug { params }
             val project = transaction {
                 Project.new {
                     name = params["name"]!!

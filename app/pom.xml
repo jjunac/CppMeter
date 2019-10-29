@@ -41,6 +41,10 @@
             <artifactId>ktor-server-netty</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>kotlinx-coroutines-core</artifactId>
+        </dependency>
+        <dependency>
             <groupId>io.ktor</groupId>
             <artifactId>ktor-locations</artifactId>
             <scope>compile</scope>

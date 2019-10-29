@@ -14,6 +14,8 @@ import io.ktor.request.ApplicationRequest
 import io.ktor.request.document
 import io.ktor.request.path
 import io.ktor.util.KtorExperimentalAPI
+import kotlinx.coroutines.ObsoleteCoroutinesApi
+import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import org.antlr.v4.runtime.ANTLRFileStream
 import org.antlr.v4.runtime.CommonTokenStream
@@ -27,6 +29,7 @@ import java.io.File
 import java.nio.file.Paths
 import java.sql.Connection
 import java.sql.Connection.TRANSACTION_READ_UNCOMMITTED
+import kotlin.coroutines.coroutineContext
 
 object Core {
 
@@ -49,14 +52,17 @@ object Core {
         Registry.discover()
     }
 
+    @ObsoleteCoroutinesApi
     @KtorExperimentalAPI
     fun handle(request: ApplicationRequest): Any {
-        val activeProject = request.queryParameters["p"]!!
-        // TODO: improve the 2 Map.get
-        projectAnalyserMap.computeIfAbsent(activeProject) {
-            ProjectAnalyser(transaction { Project.find { Projects.name eq it }.limit(1).first() }.path)
+        return runBlocking {
+            val activeProject = request.queryParameters["p"]!!
+            // TODO: improve the 2 Map.get
+            projectAnalyserMap.computeIfAbsent(activeProject) {
+                ProjectAnalyser(transaction { Project.find { Projects.name eq it }.limit(1).first() }.path)
+            }
+            return@runBlocking projectAnalyserMap[activeProject]!!.handle(request)
         }
-        return projectAnalyserMap[activeProject]!!.handle(request)
     }
 
 

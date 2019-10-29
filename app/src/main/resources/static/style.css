@@ -19,3 +19,7 @@ body {
     color: var(--gray);
     font-size: 1.25rem;
 }
+
+body,html {
+    height:100%;
+}

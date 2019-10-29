@@ -15,14 +15,12 @@ class FunctionComplexityListener : FunctionSignatureListener() {
 
     override fun enterFunctiondefinition(ctx: CPP14Parser.FunctiondefinitionContext?) {
         super.enterFunctiondefinition(ctx)
-        logger.debug { "Parsing file: ${getFullyQualifiedFunctionName()}" }
         complexity = 1
     }
 
     override fun exitFunctiondefinition(ctx: CPP14Parser.FunctiondefinitionContext?) {
         super.exitFunctiondefinition(ctx)
         functions.add(Function(getFullyQualifiedFunctionName(), complexity))
-        logger.debug { "${getFullyQualifiedFunctionName()} : $complexity" }
     }
 
     override fun enterSelectionstatement(ctx: CPP14Parser.SelectionstatementContext?) {

@@ -15,6 +15,7 @@ import io.ktor.request.ApplicationRequest
 import io.ktor.request.document
 import io.ktor.request.path
 import io.ktor.util.KtorExperimentalAPI
+import kotlinx.coroutines.*
 import mu.KotlinLogging
 import org.antlr.v4.runtime.ANTLRFileStream
 import org.antlr.v4.runtime.CommonTokenStream
@@ -22,36 +23,51 @@ import java.io.File
 import java.nio.file.Paths
 
 
+@ObsoleteCoroutinesApi
 class ProjectAnalyser(private val projectPath: String) {
 
     private val logger = KotlinLogging.logger {}
 
     private val viewInstances = mutableMapOf<String, View>()
-    private var isAnalysed = false
+
+    private val statusActor = createAnalysisStatusActor()
+    private val analysisOngoingActor = createAnalysisOngoingActor()
+
 
 
     @KtorExperimentalAPI
-    fun handle(request: ApplicationRequest): Any {
+    suspend fun handle(request: ApplicationRequest): Any {
         val activeProject = request.queryParameters["p"]!!
         val e = DisplayEvent(activeProject, viewInstances.mapValues { it.value.displayableName })
-        if (!isAnalysed) {
-            analyseProject()
+        // TODO: atomic action
+        if (!analysisOngoingActor.isAnalysisOngoing()) {
+            analysisOngoingActor.startAnalysis()
+            GlobalScope.launch { analyseProject() }
             return PageDisplayer("analyse.ftl").display(e)
         }
-        if (request.path() == "/")
-            return PageDisplayer("overview.ftl").display(e)
-        val view = viewInstances[request.document()] ?: throw NotFoundException()
-        return view.displayer!!.display(e)
+        return when(request.path()) {
+            "/" -> PageDisplayer("overview.ftl").display(e)
+            "/analysis/status" -> mapOf(
+                "ongoing" to analysisOngoingActor.isAnalysisOngoing(),
+                "description" to statusActor.getAnalysisStatus()
+            )
+            else -> {
+                val view = viewInstances[request.document()] ?: throw NotFoundException()
+                view.displayer!!.display(e)
+            }
+        }
+
     }
 
-    private fun analyseProject() {
+    private suspend fun analyseProject() {
         val analyserInstances = computeNeededAnalyser()
         runAnalysers(analyserInstances.values)
         buildViews(analyserInstances)
-        isAnalysed = true
+        analysisOngoingActor.stopAnalysis()
     }
 
-    private fun computeNeededAnalyser(): MutableMap<Class<out Analyser>, Analyser> {
+    private suspend fun computeNeededAnalyser(): MutableMap<Class<out Analyser>, Analyser> {
+        statusActor.setAnalysisStatus("Computing needed analysers...")
         val res = mutableMapOf<Class<out Analyser>, Analyser>()
         Registry.viewMap.values.forEach { viewClass ->
             require(viewClass.constructors.size == 1) {
@@ -70,10 +86,14 @@ class ProjectAnalyser(private val projectPath: String) {
         return res
     }
 
-    private fun runAnalysers(analysers: Collection<Analyser>) {
+    private suspend fun runAnalysers(analysers: Collection<Analyser>) {
+        statusActor.setAnalysisStatus("Performing pre-analysis...")
         analysers.forEach { it.preAnalyse(PreAnalyseEvent(projectPath)) }
 
-        File(projectPath).walk().filter { it.isFile }.forEach { f ->
+        val files = File(projectPath).walk().filter { it.isFile }
+        val fileCount = files.count()
+        files.forEachIndexed { i, f ->
+            statusActor.setAnalysisStatus("Analysing file (${i+1}/$fileCount)...")
             val filePath = Paths.get(projectPath).relativize(f.toPath()).toString().replace(File.separator, "/")
             val parser = CPP14Parser(CommonTokenStream(CPP14Lexer(ANTLRFileStream(f.toPath().toString()))))
             AnalyseEvent(projectPath, filePath, parser.translationunit()).let {e ->
@@ -81,16 +101,16 @@ class ProjectAnalyser(private val projectPath: String) {
             }
         }
 
+        statusActor.setAnalysisStatus("Performing post-analysis...")
         analysers.forEach { it.postAnalyse(PostAnalyseEvent(projectPath)) }
     }
 
-    private fun buildViews(analyserInstances: Map<Class<out Analyser>, Analyser>) {
+    private suspend fun buildViews(analyserInstances: Map<Class<out Analyser>, Analyser>) {
+        statusActor.setAnalysisStatus("Building views...")
         Registry.viewMap.forEach { (key, value) ->
             // Checks have been done earlier in computeNeededAnalyser()
             val constructor = value.constructors[0]
             val params = constructor.parameterTypes.map { analyserInstances[it]!! }
-            logger.debug { constructor.parameterTypes.map { it.simpleName } }
-            logger.debug { params }
             viewInstances[key] = (constructor.newInstance(*params.toTypedArray()) as View).apply {
                 buildDisplayer()
             }
