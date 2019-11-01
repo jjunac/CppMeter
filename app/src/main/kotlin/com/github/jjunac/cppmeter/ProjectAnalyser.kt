@@ -31,26 +31,28 @@ class ProjectAnalyser(private val projectPath: String) {
     private val viewInstances = mutableMapOf<String, View>()
 
     private val statusActor = createAnalysisStatusActor()
-    private val analysisOngoingActor = createAnalysisOngoingActor()
-
 
 
     @KtorExperimentalAPI
     suspend fun handle(request: ApplicationRequest): Any {
+        if (request.path() == "/analysis/status") {
+            return statusActor.getAnalysisStatus()
+        }
+
         val activeProject = request.queryParameters["p"]!!
         val e = DisplayEvent(activeProject, viewInstances.mapValues { it.value.displayableName })
-        // TODO: atomic action
-        if (!analysisOngoingActor.isAnalysisOngoing()) {
-            analysisOngoingActor.startAnalysis()
-            GlobalScope.launch { analyseProject() }
+
+        if (viewInstances.isEmpty()) {
+            tryStartAnalysis()
+        }
+
+        if (statusActor.isAnalysisOngoing()) {
+            logger.debug { request.path() }
             return PageDisplayer("analyse.ftl").display(e)
         }
+
         return when(request.path()) {
             "/" -> PageDisplayer("overview.ftl").display(e)
-            "/analysis/status" -> mapOf(
-                "ongoing" to analysisOngoingActor.isAnalysisOngoing(),
-                "description" to statusActor.getAnalysisStatus()
-            )
             else -> {
                 val view = viewInstances[request.document()] ?: throw NotFoundException()
                 view.displayer!!.display(e)
@@ -59,15 +61,23 @@ class ProjectAnalyser(private val projectPath: String) {
 
     }
 
+    suspend fun tryStartAnalysis(): Boolean {
+        if (statusActor.tryStartAnalysis()) {
+            GlobalScope.launch { analyseProject() }
+            return true
+        }
+        return false
+    }
+
     private suspend fun analyseProject() {
         val analyserInstances = computeNeededAnalyser()
         runAnalysers(analyserInstances.values)
         buildViews(analyserInstances)
-        analysisOngoingActor.stopAnalysis()
+        statusActor.stopAnalysis()
     }
 
     private suspend fun computeNeededAnalyser(): MutableMap<Class<out Analyser>, Analyser> {
-        statusActor.setAnalysisStatus("Computing needed analysers...")
+        statusActor.stepAnalysis("Computing needed analysers...")
         val res = mutableMapOf<Class<out Analyser>, Analyser>()
         Registry.viewMap.values.forEach { viewClass ->
             require(viewClass.constructors.size == 1) {
@@ -87,13 +97,13 @@ class ProjectAnalyser(private val projectPath: String) {
     }
 
     private suspend fun runAnalysers(analysers: Collection<Analyser>) {
-        statusActor.setAnalysisStatus("Performing pre-analysis...")
+        statusActor.stepAnalysis("Performing pre-analysis...")
         analysers.forEach { it.preAnalyse(PreAnalyseEvent(projectPath)) }
 
         val files = File(projectPath).walk().filter { it.isFile }
         val fileCount = files.count()
         files.forEachIndexed { i, f ->
-            statusActor.setAnalysisStatus("Analysing file (${i+1}/$fileCount)...")
+            statusActor.stepAnalysis("Analysing file (${i+1}/$fileCount)...")
             val filePath = Paths.get(projectPath).relativize(f.toPath()).toString().replace(File.separator, "/")
             val parser = CPP14Parser(CommonTokenStream(CPP14Lexer(ANTLRFileStream(f.toPath().toString()))))
             AnalyseEvent(projectPath, filePath, parser.translationunit()).let {e ->
@@ -101,12 +111,12 @@ class ProjectAnalyser(private val projectPath: String) {
             }
         }
 
-        statusActor.setAnalysisStatus("Performing post-analysis...")
+        statusActor.stepAnalysis("Performing post-analysis...")
         analysers.forEach { it.postAnalyse(PostAnalyseEvent(projectPath)) }
     }
 
     private suspend fun buildViews(analyserInstances: Map<Class<out Analyser>, Analyser>) {
-        statusActor.setAnalysisStatus("Building views...")
+        statusActor.stepAnalysis("Building views...")
         Registry.viewMap.forEach { (key, value) ->
             // Checks have been done earlier in computeNeededAnalyser()
             val constructor = value.constructors[0]

@@ -25,7 +25,7 @@
                     console.log(data);
                     var json = $.parseJSON(data.responseText);
                     $('#analysis-status').text(json["description"]);
-                    if (!json["ongoing"]) {
+                    if (!json["isOngoing"]) {
                         location.reload();
                     }
                 }

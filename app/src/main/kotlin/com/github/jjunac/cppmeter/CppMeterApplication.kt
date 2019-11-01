@@ -18,7 +18,6 @@ import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
-import io.ktor.locations.*
 import io.ktor.util.KtorExperimentalAPI
 import java.text.DateFormat
 
@@ -53,7 +52,6 @@ fun Application.main() {
 
 }
 
-@KtorExperimentalLocationsAPI
 fun main() {
     embeddedServer(Netty, 8080, module = Application::main).start()
 }

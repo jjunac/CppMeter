@@ -31,6 +31,7 @@ import java.sql.Connection
 import java.sql.Connection.TRANSACTION_READ_UNCOMMITTED
 import kotlin.coroutines.coroutineContext
 
+@ObsoleteCoroutinesApi
 object Core {
 
     val version = "1.0.0"
@@ -52,19 +53,23 @@ object Core {
         Registry.discover()
     }
 
-    @ObsoleteCoroutinesApi
     @KtorExperimentalAPI
     fun handle(request: ApplicationRequest): Any {
-        return runBlocking {
-            val activeProject = request.queryParameters["p"]!!
-            // TODO: improve the 2 Map.get
-            projectAnalyserMap.computeIfAbsent(activeProject) {
-                ProjectAnalyser(transaction { Project.find { Projects.name eq it }.limit(1).first() }.path)
-            }
-            return@runBlocking projectAnalyserMap[activeProject]!!.handle(request)
-        }
+        return runBlocking { getProjectAnalyser(request.queryParameters["p"]!!).handle(request) }
     }
 
+    suspend fun tryStartAnalysis(projectName: String) {
+        getProjectAnalyser(projectName).tryStartAnalysis()
+    }
+
+    private fun getProjectAnalyser(activeProject: String): ProjectAnalyser {
+        // TODO: improve the 2 Map.get
+        projectAnalyserMap.computeIfAbsent(activeProject) {
+            ProjectAnalyser(transaction { Project.find { Projects.name eq it }.limit(1).first() }.path)
+        }
+        logger.debug { projectAnalyserMap }
+        return projectAnalyserMap[activeProject]!!
+    }
 
 
 }
